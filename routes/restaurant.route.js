@@ -1,4 +1,5 @@
 const { Router } = require("express");
+const { check, validationResult } = require("express-validator");
 const { Restaurant } = require("../models/index");
 
 const restaurRouter = Router();
@@ -17,14 +18,28 @@ restaurRouter.get("/:id", async (req, res) => {
   res.json(restaurant);
 });
 
-restaurRouter.post("/", async (req, res) => {
-  try {
-    await Restaurant.create(req.body);
-    res.send("Update complete");
-  } catch (error) {
-    res.status(500).send({ err: error.message });
+restaurRouter.post(
+  "/",
+  [
+    check("name").not().isEmpty().trim(),
+    check("name").isLength({ min: 10, max: 30 }),
+    check("location").not().isEmpty().trim(),
+    check("cuisine").not().isEmpty().trim(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.json({ error: errors.array() });
+    } else {
+      try {
+        await Restaurant.create(req.body);
+        res.send("Update complete");
+      } catch (error) {
+        res.status(500).send({ err: error.message });
+      }
+    }
   }
-});
+);
 
 restaurRouter.put("/:id", async (req, res) => {
   try {
